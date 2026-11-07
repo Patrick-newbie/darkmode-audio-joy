@@ -44,8 +44,8 @@ interface Track {
 
 const TRACKS: Track[] = [
   {
-    title: "SoundHelix Song 1",
-    artist: "T. Schürger",
+    title: "Mein Traum",
+    artist: "Martin Tschopp",
     src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
     hue: "oklch(0.75 0.18 195)",
     // image: "/cover-1.jpg",
