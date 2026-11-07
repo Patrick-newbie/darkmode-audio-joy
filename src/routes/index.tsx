@@ -10,7 +10,7 @@ import {
   Image as ImageIcon,
   X,
 } from "lucide-react";
-import cover1 from "@/assets/martin_schiff_pirata_300x200.png.asset.json";
+import cover1 from "@/assets/martin_schiff_pirata_200x300.png.asset.json";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -39,7 +39,7 @@ interface Track {
   artist: string;
   src: string;
   hue: string;
-  /** Optional cover image, e.g. "/cover-1.jpg" (300 x 200 px looks best). */
+  /** Optional cover image, e.g. "/cover-1.jpg" (200 x 300 px looks best). */
   image?: string;
 }
 
@@ -169,8 +169,8 @@ function TrackCard({ track, index }: { track: Track; index: number }) {
         style={{ backgroundColor: track.hue }}
       />
 
-      {/* Cover image slot — 300 x 200 px */}
-      <div className="relative mx-auto h-[200px] w-[300px] max-w-full overflow-hidden rounded-xl border border-border bg-secondary/50">
+      {/* Cover image slot — 200 x 300 px */}
+      <div className="relative mx-auto h-[300px] w-[200px] max-w-full overflow-hidden rounded-xl border border-border bg-secondary/50">
         <input
           ref={fileInputRef}
           type="file"
@@ -208,7 +208,7 @@ function TrackCard({ track, index }: { track: Track; index: number }) {
           >
             <ImageIcon className="h-7 w-7" />
             <span className="text-xs font-medium tracking-wide">Bild einfügen</span>
-            <span className="text-[11px] opacity-70">300 × 200 px</span>
+            <span className="text-[11px] opacity-70">200 × 300 px</span>
           </button>
         )}
       </div>
