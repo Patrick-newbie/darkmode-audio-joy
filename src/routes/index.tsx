@@ -1,6 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Play, Pause, SkipBack, RotateCcw, RotateCw, Music2 } from "lucide-react";
+import {
+  Play,
+  Pause,
+  SkipBack,
+  RotateCcw,
+  RotateCw,
+  Music2,
+  Image as ImageIcon,
+  X,
+} from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -29,6 +38,8 @@ interface Track {
   artist: string;
   src: string;
   hue: string;
+  /** Optional cover image, e.g. "/cover-1.jpg" (300 x 200 px looks best). */
+  image?: string;
 }
 
 const TRACKS: Track[] = [
@@ -37,18 +48,21 @@ const TRACKS: Track[] = [
     artist: "T. Schürger",
     src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
     hue: "oklch(0.75 0.18 195)",
+    image: "",
   },
   {
     title: "SoundHelix Song 2",
     artist: "T. Schürger",
     src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
     hue: "oklch(0.72 0.19 330)",
+    image: "",
   },
   {
     title: "SoundHelix Song 3",
     artist: "T. Schürger",
     src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
     hue: "oklch(0.78 0.16 85)",
+    image: "",
   },
 ];
 
@@ -61,9 +75,12 @@ function formatTime(seconds: number): string {
 
 function TrackCard({ track, index }: { track: Track; index: number }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const objectUrlRef = useRef<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [image, setImage] = useState<string | null>(track.image || null);
 
   useEffect(() => {
     const audio = new Audio(track.src);
@@ -84,6 +101,10 @@ function TrackCard({ track, index }: { track: Track; index: number }) {
       audio.removeEventListener("loadedmetadata", onMeta);
       audio.removeEventListener("ended", onEnded);
       audioRef.current = null;
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+        objectUrlRef.current = null;
+      }
     };
   }, [track.src]);
 
@@ -117,6 +138,26 @@ function TrackCard({ track, index }: { track: Track; index: number }) {
     setCurrentTime(next);
   };
 
+  const pickImage = () => fileInputRef.current?.click();
+
+  const onFile = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
+    const url = URL.createObjectURL(file);
+    objectUrlRef.current = url;
+    setImage(url);
+  };
+
+  const removeImage = () => {
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+      objectUrlRef.current = null;
+    }
+    setImage(null);
+  };
+
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
@@ -127,12 +168,56 @@ function TrackCard({ track, index }: { track: Track; index: number }) {
         style={{ backgroundColor: track.hue }}
       />
 
-      <div className="flex items-center gap-4">
+      {/* Cover image slot — 300 x 200 px */}
+      <div className="relative mx-auto h-[200px] w-[300px] max-w-full overflow-hidden rounded-xl border border-border bg-secondary/50">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={onFile}
+        />
+
+        {image ? (
+          <>
+            <img
+              src={image}
+              alt={`Cover zu ${track.title}`}
+              className="h-full w-full object-cover"
+            />
+            <button
+              onClick={removeImage}
+              title="Bild entfernen"
+              aria-label="Bild entfernen"
+              className="absolute top-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-background/80 text-foreground backdrop-blur transition-colors hover:bg-background"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <button
+              onClick={pickImage}
+              className="absolute inset-x-0 bottom-0 bg-background/70 py-1.5 text-xs font-medium text-foreground opacity-0 backdrop-blur transition-opacity group-hover:opacity-100"
+            >
+              Bild wechseln
+            </button>
+          </>
+        ) : (
+          <button
+            onClick={pickImage}
+            className="flex h-full w-full flex-col items-center justify-center gap-2 border border-dashed border-border/80 text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ImageIcon className="h-7 w-7" />
+            <span className="text-xs font-medium tracking-wide">Bild einfügen</span>
+            <span className="text-[11px] opacity-70">300 × 200 px</span>
+          </button>
+        )}
+      </div>
+
+      <div className="mt-5 flex items-center gap-4">
         <div
-          className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl"
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
           style={{ backgroundColor: `color-mix(in oklch, ${track.hue} 18%, transparent)` }}
         >
-          <Music2 className="h-6 w-6" style={{ color: track.hue }} />
+          <Music2 className="h-5 w-5" style={{ color: track.hue }} />
         </div>
         <div className="min-w-0">
           <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase">
@@ -144,7 +229,7 @@ function TrackCard({ track, index }: { track: Track; index: number }) {
       </div>
 
       {/* Progress bar */}
-      <div className="mt-6">
+      <div className="mt-5">
         <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
           <div
             className="h-full rounded-full transition-[width] duration-200"
@@ -211,21 +296,8 @@ function Index() {
       {/* Ambient background glow */}
       <div className="pointer-events-none absolute top-0 left-1/2 h-96 w-[60rem] -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
 
-      <main className="relative mx-auto max-w-5xl px-6 py-16">
-        <header className="mb-12 text-center">
-          <p className="text-xs font-semibold tracking-[0.3em] text-muted-foreground uppercase">
-            Darkmode Audio
-          </p>
-          <h1 className="mt-3 text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
-            Pulse Deck
-          </h1>
-          <p className="mx-auto mt-4 max-w-md text-sm text-muted-foreground">
-            Drei MP3-Tracks bereit zum Abspielen — mit Sprung zum Anfang sowie 10 Sekunden vor und
-            zurück.
-          </p>
-        </header>
-
-        <div className="grid gap-6 md:grid-cols-3">
+      <main className="relative mx-auto max-w-6xl px-6 py-12">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {TRACKS.map((track, i) => (
             <TrackCard key={track.src} track={track} index={i} />
           ))}
