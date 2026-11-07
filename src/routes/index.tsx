@@ -48,7 +48,7 @@ const TRACKS: Track[] = [
     artist: "T. Schürger",
     src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
     hue: "oklch(0.75 0.18 195)",
-    image: "",
+    // image: "/cover-1.jpg",
   },
   {
     title: "SoundHelix Song 2",
