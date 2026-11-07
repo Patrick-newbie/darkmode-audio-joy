@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Keep track cover images as plain image files under `src/assets/`, imported directly in the route that uses them, so a downloaded copy of the project still shows them without any hosted asset storage.
