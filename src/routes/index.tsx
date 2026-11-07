@@ -10,6 +10,7 @@ import {
   Image as ImageIcon,
   X,
 } from "lucide-react";
+import cover1 from "@/assets/martin_schiff_pirata_300x200.png.asset.json";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -48,7 +49,7 @@ const TRACKS: Track[] = [
     artist: "Martin Tschopp",
     src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
     hue: "oklch(0.75 0.18 195)",
-    // image: "/cover-1.jpg",
+    image: cover1.url,
   },
   {
     title: "SoundHelix Song 2",
