@@ -42,7 +42,7 @@ interface Track {
 
 const TRACK: Track = {
   title: "Mein Traum",
-  artist: "Martin Tschopp",
+  artist: "Hans Frischknecht",
   src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
   hue: "oklch(0.75 0.18 195)",
   image: cover1,
