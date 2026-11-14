@@ -7,8 +7,6 @@ import {
   RotateCcw,
   RotateCw,
   Music2,
-  Image as ImageIcon,
-  X,
 } from "lucide-react";
 import cover1 from "@/assets/martin_schiff_pirata_200x300.png";
 
@@ -19,13 +17,13 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Darkmode-Audioplayer mit drei MP3-Tracks: Abspielen, zurück zum Anfang sowie 10 Sekunden vor und zurück.",
+          "Darkmode-Audioplayer für „Mein Traum“: Abspielen, zurück zum Anfang sowie 10 Sekunden vor und zurück.",
       },
       { property: "og:title", content: "Pulse Deck — MP3 Player" },
       {
         property: "og:description",
         content:
-          "Darkmode-Audioplayer mit drei MP3-Tracks: Abspielen, zurück zum Anfang sowie 10 Sekunden vor und zurück.",
+          "Darkmode-Audioplayer für „Mein Traum“: Abspielen, zurück zum Anfang sowie 10 Sekunden vor und zurück.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -39,33 +37,16 @@ interface Track {
   artist: string;
   src: string;
   hue: string;
-  /** Optional cover image, e.g. "/cover-1.jpg" (200 x 300 px looks best). */
-  image?: string;
+  image: string;
 }
 
-const TRACKS: Track[] = [
-  {
-    title: "Mein Traum",
-    artist: "Martin Tschopp",
-    src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-    hue: "oklch(0.75 0.18 195)",
-    image: cover1,
-  },
-  {
-    title: "SoundHelix Song 2",
-    artist: "T. Schürger",
-    src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
-    hue: "oklch(0.72 0.19 330)",
-    // image: "/cover-2.jpg",
-  },
-  {
-    title: "SoundHelix Song 3",
-    artist: "T. Schürger",
-    src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
-    hue: "oklch(0.78 0.16 85)",
-    // image: "/cover-3.jpg",
-  },
-];
+const TRACK: Track = {
+  title: "Mein Traum",
+  artist: "Martin Tschopp",
+  src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+  hue: "oklch(0.75 0.18 195)",
+  image: cover1,
+};
 
 function formatTime(seconds: number): string {
   if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
@@ -74,14 +55,11 @@ function formatTime(seconds: number): string {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-function TrackCard({ track, index }: { track: Track; index: number }) {
+function TrackCard({ track }: { track: Track }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const objectUrlRef = useRef<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [image, setImage] = useState<string | null>(track.image || null);
 
   useEffect(() => {
     const audio = new Audio(track.src);
@@ -102,10 +80,6 @@ function TrackCard({ track, index }: { track: Track; index: number }) {
       audio.removeEventListener("loadedmetadata", onMeta);
       audio.removeEventListener("ended", onEnded);
       audioRef.current = null;
-      if (objectUrlRef.current) {
-        URL.revokeObjectURL(objectUrlRef.current);
-        objectUrlRef.current = null;
-      }
     };
   }, [track.src]);
 
@@ -139,78 +113,23 @@ function TrackCard({ track, index }: { track: Track; index: number }) {
     setCurrentTime(next);
   };
 
-  const pickImage = () => fileInputRef.current?.click();
-
-  const onFile = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-    if (!file) return;
-    if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
-    const url = URL.createObjectURL(file);
-    objectUrlRef.current = url;
-    setImage(url);
-  };
-
-  const removeImage = () => {
-    if (objectUrlRef.current) {
-      URL.revokeObjectURL(objectUrlRef.current);
-      objectUrlRef.current = null;
-    }
-    setImage(null);
-  };
-
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-[0_0_40px_-15px_rgba(0,0,0,0.8)] transition-transform duration-300 hover:-translate-y-1">
+    <div className="group relative w-full max-w-sm overflow-hidden rounded-2xl border border-border bg-card p-4 shadow-[0_0_40px_-15px_rgba(0,0,0,0.8)] transition-transform duration-300 hover:-translate-y-1 sm:p-6">
       {/* Glow accent */}
       <div
         className="pointer-events-none absolute -top-16 -right-16 h-40 w-40 rounded-full opacity-20 blur-3xl transition-opacity duration-300 group-hover:opacity-40"
         style={{ backgroundColor: track.hue }}
       />
 
-      {/* Cover image slot — 200 x 300 px */}
-      <div className="relative mx-auto h-[300px] w-[200px] max-w-full overflow-hidden rounded-xl border border-border bg-secondary/50">
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={onFile}
+      {/* Fixed cover image — 200 x 300 px, scaled proportionally on very narrow screens */}
+      <div className="relative mx-auto aspect-[2/3] w-[200px] max-w-full overflow-hidden rounded-xl border border-border bg-secondary/50">
+        <img
+          src={track.image}
+          alt={`Cover zu ${track.title}`}
+          className="h-full w-full object-cover"
         />
-
-        {image ? (
-          <>
-            <img
-              src={image}
-              alt={`Cover zu ${track.title}`}
-              className="h-full w-full object-cover"
-            />
-            <button
-              onClick={removeImage}
-              title="Bild entfernen"
-              aria-label="Bild entfernen"
-              className="absolute top-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-background/80 text-foreground backdrop-blur transition-colors hover:bg-background"
-            >
-              <X className="h-4 w-4" />
-            </button>
-            <button
-              onClick={pickImage}
-              className="absolute inset-x-0 bottom-0 bg-background/70 py-1.5 text-xs font-medium text-foreground opacity-0 backdrop-blur transition-opacity group-hover:opacity-100"
-            >
-              Bild wechseln
-            </button>
-          </>
-        ) : (
-          <button
-            onClick={pickImage}
-            className="flex h-full w-full flex-col items-center justify-center gap-2 border border-dashed border-border/80 text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <ImageIcon className="h-7 w-7" />
-            <span className="text-xs font-medium tracking-wide">Bild einfügen</span>
-            <span className="text-[11px] opacity-70">200 × 300 px</span>
-          </button>
-        )}
       </div>
 
       <div className="mt-5 flex items-center gap-4">
@@ -222,7 +141,7 @@ function TrackCard({ track, index }: { track: Track; index: number }) {
         </div>
         <div className="min-w-0">
           <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase">
-            Track {index + 1}
+            Track 1
           </p>
           <h2 className="truncate text-lg font-semibold text-card-foreground">{track.title}</h2>
           <p className="text-sm text-muted-foreground">{track.artist}</p>
@@ -244,12 +163,12 @@ function TrackCard({ track, index }: { track: Track; index: number }) {
       </div>
 
       {/* Controls */}
-      <div className="mt-5 flex items-center justify-center gap-3">
+      <div className="mt-5 flex flex-wrap items-center justify-center gap-2 sm:gap-3">
         <button
           onClick={toStart}
           title="Zurück zum Anfang"
           aria-label="Zurück zum Anfang"
-          className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-secondary text-secondary-foreground transition-colors hover:bg-accent"
+          className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-secondary text-secondary-foreground transition-colors hover:bg-accent sm:h-11 sm:w-11"
         >
           <SkipBack className="h-4 w-4" />
         </button>
@@ -257,7 +176,7 @@ function TrackCard({ track, index }: { track: Track; index: number }) {
           onClick={() => skip(-10)}
           title="10 Sekunden zurück"
           aria-label="10 Sekunden zurück"
-          className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-secondary text-secondary-foreground transition-colors hover:bg-accent"
+          className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-secondary text-secondary-foreground transition-colors hover:bg-accent sm:h-11 sm:w-11"
         >
           <RotateCcw className="h-4 w-4" />
           <span className="sr-only">10s zurück</span>
@@ -266,7 +185,7 @@ function TrackCard({ track, index }: { track: Track; index: number }) {
           onClick={togglePlay}
           title={isPlaying ? "Pause" : "Abspielen"}
           aria-label={isPlaying ? "Pause" : "Abspielen"}
-          className="flex h-14 w-14 items-center justify-center rounded-full text-background shadow-lg transition-transform hover:scale-105 active:scale-95"
+          className="flex h-12 w-12 items-center justify-center rounded-full text-background shadow-lg transition-transform hover:scale-105 active:scale-95 sm:h-14 sm:w-14"
           style={{ backgroundColor: track.hue, boxShadow: `0 0 24px -4px ${track.hue}` }}
         >
           {isPlaying ? (
@@ -279,13 +198,13 @@ function TrackCard({ track, index }: { track: Track; index: number }) {
           onClick={() => skip(10)}
           title="10 Sekunden vorwärts"
           aria-label="10 Sekunden vorwärts"
-          className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-secondary text-secondary-foreground transition-colors hover:bg-accent"
+          className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-secondary text-secondary-foreground transition-colors hover:bg-accent sm:h-11 sm:w-11"
         >
           <RotateCw className="h-4 w-4" />
           <span className="sr-only">10s vorwärts</span>
         </button>
         {/* Spacer to keep play button centered */}
-        <div className="h-11 w-11" aria-hidden="true" />
+        <div className="h-10 w-10 sm:h-11 sm:w-11" aria-hidden="true" />
       </div>
     </div>
   );
@@ -297,12 +216,8 @@ function Index() {
       {/* Ambient background glow */}
       <div className="pointer-events-none absolute top-0 left-1/2 h-96 w-[60rem] -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
 
-      <main className="relative mx-auto max-w-6xl px-6 py-12">
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {TRACKS.map((track, i) => (
-            <TrackCard key={track.src} track={track} index={i} />
-          ))}
-        </div>
+      <main className="relative mx-auto flex min-h-screen w-full max-w-6xl items-center justify-center px-4 py-8 sm:px-6 sm:py-12">
+        <TrackCard track={TRACK} />
       </main>
     </div>
   );
